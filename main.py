@@ -3,7 +3,6 @@ import classAgent
 import classPattern
 import classEpisode
 import classTrip
-import csv
 import utility
 import copy
 
