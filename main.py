@@ -52,7 +52,6 @@ for user in range(len(fms)):
         existingPattern.new_episode_duration(agent)
         agent.pattern = existingPattern
 
-
 pcMTZDictionary = {}
 MTZs = []
 with open('postalCodeMTZ_lookup.csv') as file:
