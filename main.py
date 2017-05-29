@@ -87,7 +87,7 @@ with open('OPcosts.csv') as file:
             unmatched += 1
 
 for trip in existingPattern.trips:
-    trip.cost = OPtravelCosts[MTZs.index(pcMTZDictionary[trip.origin])][MTZs.index(pcMTZDictionary[trip.destinaiton])][trip.mode]
+    trip.cost = OPtravelCosts[MTZs.index(pcMTZDictionary[trip.origin])][MTZs.index(pcMTZDictionary[trip.destination])][trip.mode]
 
 # ****************************************** PARAMETER DETERMINATION ************************************************
 
@@ -167,8 +167,10 @@ while not localMaxFound:
             for o in activityLocations[pattern.sequence[episode].activityType]:
                 for d in activityLocations[pattern.sequence[episode + 1].activityType]:
                     for m in range(len(agent.modes)):
-                        trip = classTrip.Trip(m, 0, travelTimes[postalCodes.index(o)][postalCodes.index(d)][m] * 60,
-                                              travelCosts[postalCodes.index(o)][postalCodes.index(d)][m], o, d)
+                        trip = classTrip.Trip(m, 0, OPtravelTimes[MTZs.index(pcMTZDictionary[trip.origin])][
+                                                  MTZs.index(pcMTZDictionary[trip.destination])][trip.mode] * 60,
+                                              OPtravelCosts[MTZs.index(pcMTZDictionary[trip.origin])][
+                                                  MTZs.index(pcMTZDictionary[trip.destination])][trip.mode], o, d)
                         u = utility.trip_utility(agent, trip)
                         if u > maxUtility:
                             maxUtility = u
