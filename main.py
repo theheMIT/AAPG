@@ -5,6 +5,7 @@ import classEpisode
 import classTrip
 import utility
 import copy
+import csv
 
 
 # ************************************************* PROGRAM VARIABLES *************************************************
@@ -51,34 +52,43 @@ for user in range(len(fms)):
         existingPattern.new_episode_duration(agent)
         agent.pattern = existingPattern
 
-travelTimes = [[[600 for i in range(len(agent.modes))] for j in range(len(postalCodes))] for k in range(len(postalCodes))]
-ttEntries = [[[0 for i in range(len(agent.modes))] for j in range(len(postalCodes))] for k in range(len(postalCodes))]
-travelCosts = [[[600 for i in range(len(agent.modes))] for j in range(len(postalCodes))] for k in range(len(postalCodes))]
-tcEntries = [[[0 for i in range(len(agent.modes))] for j in range(len(postalCodes))] for k in range(len(postalCodes))]
-for user in range(len(fms)):
-    activityDiary = fms[user]['activities']
-    for episode in range(len(activityDiary)):
-        if activityDiary[episode]['activityType'] == 'travel':
-            origin = activityDiary[episode]['postalCodePrev']
-            destination = activityDiary[episode]['postalCode']
-            if origin in postalCodes and destination in postalCodes:
-                for mode in agent.modes:
-                    tt = importFMS.get_travel_times(activityDiary[episode]['travelAlt'], mode)
-                    tc = importFMS.get_travel_costs(activityDiary[episode]['travelAlt'], mode)
 
-                    o = postalCodes.index(origin)
-                    d = postalCodes.index(destination)
-                    travelTimes[o][d][agent.modes.index(mode)] = (ttEntries[o][d][agent.modes.index(mode)] *
-                                                                  travelTimes[o][d][agent.modes.index(mode)] + tt) / \
-                                                                 (ttEntries[o][d][agent.modes.index(mode)] + 1)
-                    ttEntries[o][d][agent.modes.index(mode)] += 1
-                    travelCosts[o][d][agent.modes.index(mode)] = (tcEntries[o][d][agent.modes.index(mode)] *
-                                                                  travelCosts[o][d][agent.modes.index(mode)] + tc) / \
-                                                                 (tcEntries[o][d][agent.modes.index(mode)] + 1)
-                    tcEntries[o][d][agent.modes.index(mode)] += 1
+pcMTZDictionary = {}
+MTZs = []
+with open('postalCodeMTZ_lookup.csv') as file:
+    postalCodeMTZLookUp = csv.reader(file)
+
+    for pc in postalCodeMTZLookUp:
+        pcMTZDictionary[pc[0]] = pc[1]
+        if pc[1] not in MTZs:
+            MTZs.append(pc[1])
+
+zonesCount = len(set(pcMTZDictionary.values()))
+OPtravelTimes = [[[500 for i in range(len(agent.modes))] for j in range(zonesCount)] for k in range(zonesCount)]
+OPtravelCosts = [[[50 for i in range(len(agent.modes))] for j in range(zonesCount)] for k in range(zonesCount)]
+
+with open('OPcosts.csv') as file:
+    OPcosts = csv.reader(file)
+
+    matched = 0
+    unmatched = 0
+
+    for entry in OPcosts:
+        origin = entry[1]
+        destination = entry[2]
+        travelTimes = [float(entry[3]) / 5 * 60, float(entry[5]),
+                       float(entry[6]) + float(entry[7]) + float(entry[8])]
+        travelCosts = [0, 2 + 0.14 * float(entry[3]) + float(entry[4]) / 100, float(entry[9]) / 100]
+
+        if origin in MTZs and destination in MTZs:
+            OPtravelTimes[MTZs.index(origin)][MTZs.index(destination)] = travelTimes
+            OPtravelCosts[MTZs.index(origin)][MTZs.index(destination)] = travelCosts
+            matched += 1
+        else:
+            unmatched += 1
 
 for trip in existingPattern.trips:
-    trip.cost = travelCosts[postalCodes.index(trip.origin)][postalCodes.index(trip.destination)][trip.mode]
+    trip.cost = OPtravelCosts[MTZs.index(pcMTZDictionary[trip.origin])][MTZs.index(pcMTZDictionary[trip.destinaiton])][trip.mode]
 
 # ****************************************** PARAMETER DETERMINATION ************************************************
 
