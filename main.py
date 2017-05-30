@@ -113,6 +113,8 @@ while not localMaxFound:
     print('__________________________________ Iteration ', iteration, '__________________________________')
 
     # _________________________________________ Generate New Sequences __________________________________________
+
+
     # New sequence by insertion
     for activityType in range(len(agent.activityTypes)):
         for index in range(1, len(baselinePattern.sequence) - 1):
@@ -167,11 +169,10 @@ while not localMaxFound:
             for o in activityLocations[pattern.sequence[episode].activityType]:
                 for d in activityLocations[pattern.sequence[episode + 1].activityType]:
                     for m in range(len(agent.modes)):
-                        trip = classTrip.Trip(m, 0, OPtravelTimes[MTZs.index(pcMTZDictionary[trip.origin])][
-                                                  MTZs.index(pcMTZDictionary[trip.destination])][trip.mode] * 60,
-                                              OPtravelCosts[MTZs.index(pcMTZDictionary[trip.origin])][
-                                                  MTZs.index(pcMTZDictionary[trip.destination])][trip.mode], o, d)
-                        u = utility.trip_utility(agent, trip)
+                        trip = classTrip.Trip(m, 0, OPtravelTimes[MTZs.index(pcMTZDictionary[o])][MTZs.index(
+                            pcMTZDictionary[d])][m] * 60, OPtravelCosts[MTZs.index(pcMTZDictionary[o])][
+                                                  MTZs.index(pcMTZDictionary[d])][m], o, d)
+                        u = utility.trip_utility(agent, trip) - agent.averageUtility * trip.duration / 60
                         if u > maxUtility:
                             maxUtility = u
                             preferredTrip = copy.deepcopy(trip)
