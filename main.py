@@ -75,9 +75,14 @@ with open('OPcosts.csv') as file:
     for entry in OPcosts:
         origin = entry[1]
         destination = entry[2]
-        travelTimes = [float(entry[3]) / 5 * 60, float(entry[5]),
-                       float(entry[6]) + float(entry[7]) + float(entry[8])]
-        travelCosts = [0, 2 + 0.14 * float(entry[3]) + float(entry[4]) / 100, float(entry[9]) / 100]
+        if origin != destination:
+            travelTimes = [float(entry[3]) / 5 * 60, float(entry[5]),
+                           float(entry[6]) + float(entry[7]) + float(entry[8]), float(entry[5])]
+            travelCosts = [0, 2 + 0.14 * float(entry[3]) + float(entry[4]) / 100, float(entry[9]) / 100,
+                           1 + 0.3 * float(entry[3])]
+        else:
+            travelTimes = [10, 10, 15, 10]
+            travelCosts = [0, 2.5, 1, 1.2]
 
         if origin in MTZs and destination in MTZs:
             OPtravelTimes[MTZs.index(origin)][MTZs.index(destination)] = travelTimes
