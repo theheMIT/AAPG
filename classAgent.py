@@ -1,3 +1,5 @@
+import math
+
 
 class Agent:
     def __init__(self):
@@ -7,21 +9,19 @@ class Agent:
         self.modes = ['Foot', 'Car/Van', 'Bus']
         self.flexibility = 15
         self.specificActivityInertia = [1, 10, 2, 5, 2]
-        self.valueOfTime = 2
+        self.valueOfTime = 1
         self.valueOfMoney = 1
-        # self.modeInertia = 10
+        self.averageUtility = 0
 
         self.parameters = []
 
-        self.travelUtilityScale = 1
+        self.travelUtilityScale = 300
 
         self.betaTravelTime = [self.travelUtilityScale * self.valueOfTime * -2.21 / 60,
                                self.travelUtilityScale * self.valueOfTime * -1.10 / 60,
-                               self.travelUtilityScale * self.valueOfTime * -0.717 / 60,
                                self.travelUtilityScale * self.valueOfTime * -0.717 / 60]
         self.betaTravelCost = [self.travelUtilityScale * self.valueOfMoney * 0,
                                self.travelUtilityScale * self.valueOfMoney * -0.04,
-                               self.travelUtilityScale * self.valueOfMoney * -0.0375,
                                self.travelUtilityScale * self.valueOfMoney * -0.0375]
         self.pattern = None
 
@@ -46,4 +46,6 @@ class Agent:
         for a in range(1, len(self.activityTypes)):
             self.parameters[a].append(self.parameters[0][2] * (self.parameters[0][0] - self.parameters[0][1]) /
                                  (self.parameters[a][0] - self.parameters[a][1]))
+
+        self.averageUtility = math.log2(self.pattern.averageEffectiveDuration[0])
 
