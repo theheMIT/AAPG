@@ -8,53 +8,53 @@ import copy
 import csv
 
 
-# ************************************************* PROGRAM VARIABLES *************************************************
-
-# openHours = [[0, 1440], [540, 1020], [600, 1440], [420, 1440], [660, 1320]]
-# privateVehicleModes = ["Bike", "Driv"]
-
-
 # *************************************************** LOAD FMS DATA ***************************************************
 
-fms = importFMS.load_dataset('FMSStops_net_mtz_timeline_with_alternatives.json')
+# Update file names
+# Ensure files are located in project folder
+# ----------------------------------------------------------------
 
+fileActivityDiary = 'FMS_Activity_Diary.json'
+fileOD = 'OPcosts.csv'
+filePostalCodeMTZLookUp = 'postalCodeMTZ_lookup.csv'
+
+# ----------------------------------------------------------------
+
+fms = importFMS.load_dataset(fileActivityDiary)
+activityDiary = fms['activities']
 postalCodes = []
 activityLocations = {}
+agent = classAgent.Agent()
+existingPattern = classPattern.Pattern()
 
-for user in range(len(fms)):
-    if user == 96:
-        activityDiary = fms[user]['activities']
-        agent = classAgent.Agent()
-        existingPattern = classPattern.Pattern()
+for activity in activityDiary:
+    if activity['activityType'] == 'stop':
+        importFMS.check_activity_type(activity, agent.activityTypes)
 
-        for activity in activityDiary:
-            if activity['activityType'] == 'stop':
-                importFMS.check_activity_type(activity, agent.activityTypes)
+        episode = classEpisode.Episode(agent.activityTypes.index(activity['activity']), activity['startTime'],
+                                       activity['endTime'], activity['postalCode'])
+        existingPattern.add_episode(episode)
 
-                episode = classEpisode.Episode(agent.activityTypes.index(activity['activity']), activity['startTime'],
-                                               activity['endTime'], activity['postalCode'])
-                existingPattern.add_episode(episode)
+        if agent.activityTypes.index(activity['activity']) not in list(activityLocations.keys()):
+            activityLocations[agent.activityTypes.index(activity['activity'])] = [activity['postalCode']]
+        else:
+            activityLocations[agent.activityTypes.index(activity['activity'])].append(activity['postalCode'])
+        postalCodes.append(activity['postalCode'])
 
-                if agent.activityTypes.index(activity['activity']) not in list(activityLocations.keys()):
-                    activityLocations[agent.activityTypes.index(activity['activity'])] = [activity['postalCode']]
-                else:
-                    activityLocations[agent.activityTypes.index(activity['activity'])].append(activity['postalCode'])
-                postalCodes.append(activity['postalCode'])
+    if activity['activityType'] == 'travel':
+        trip = classTrip.Trip(agent.modes.index(activity['activity']), activity['startTime'],
+                              activity['endTime'], 0, activity['postalCodePrev'], activity['postalCode'])
+        existingPattern.add_trip(trip)
 
-            if activity['activityType'] == 'travel':
-                trip = classTrip.Trip(agent.modes.index(activity['activity']), activity['startTime'],
-                                      activity['endTime'], 0, activity['postalCodePrev'], activity['postalCode'])
-                existingPattern.add_trip(trip)
-
-        existingPattern.update_day_patterns()
-        existingPattern.daily_durations(agent.activityTypes)
-        existingPattern.average_effective_durations(agent.activityTypes, agent.mandatoryActivityTypes)
-        existingPattern.new_episode_duration(agent)
-        agent.pattern = existingPattern
+existingPattern.update_day_patterns()
+existingPattern.daily_durations(agent.activityTypes)
+existingPattern.average_effective_durations(agent.activityTypes, agent.mandatoryActivityTypes)
+existingPattern.new_episode_duration(agent)
+agent.pattern = existingPattern
 
 pcMTZDictionary = {}
 MTZs = []
-with open('postalCodeMTZ_lookup.csv') as file:
+with open(filePostalCodeMTZLookUp) as file:
     postalCodeMTZLookUp = csv.reader(file)
 
     for pc in postalCodeMTZLookUp:
@@ -66,7 +66,7 @@ zonesCount = len(set(pcMTZDictionary.values()))
 OPtravelTimes = [[[500 for i in range(len(agent.modes))] for j in range(zonesCount)] for k in range(zonesCount)]
 OPtravelCosts = [[[50 for i in range(len(agent.modes))] for j in range(zonesCount)] for k in range(zonesCount)]
 
-with open('OPcosts.csv') as file:
+with open(fileOD) as file:
     OPcosts = csv.reader(file)
 
     matched = 0
@@ -165,8 +165,6 @@ while not localMaxFound:
     totalNewSequences = len(newPatterns)
 
     # ____________________________________________ Determine Travel ___________________________________________
-    # Need to code mode continuity for private vehicle modes --> track vehicle location in pattern class
-    # Include opportunity cost
     for pattern in newPatterns:
         for episode in range(len(pattern.sequence) - 1):
             maxUtility = -9999
